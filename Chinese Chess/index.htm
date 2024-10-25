@@ -1,0 +1,196 @@
+<html>
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=gbk">
+    <title>Chinese Chess</title>
+    <script type="text/javascript" src="book.js"></script>
+    <script type="text/javascript" src="position.js"></script>
+    <script type="text/javascript" src="search.js"></script>
+    <script type="text/javascript" src="board.js"></script>
+    <script type="text/javascript" src="cchess.js"></script>
+    <style type="text/css"><!--
+body {
+  background: url(../background.gif);
+}
+
+span.td {
+  display: inline-block;
+}
+
+div.label {
+  font-size: 14px;
+  padding:2px;
+}
+
+select {
+  font-size: 14px;
+  width: 108px;
+  padding:2px;
+}
+
+option {
+  font-size: 14px;
+}
+
+input.button {
+  font-size: 14px;
+  width: 108px;
+}
+
+label {
+  font-size: 14px;
+}
+
+    --></style>
+  </head>
+  <body>
+    <div style="text-align:center;font-size:28px;font-family:黑体">αXq Chinese Chess Bot</div>
+    <div style="height:16px"></div>
+    <div style="text-align:center;white-space:nowrap">
+      <span class="td" style="margin-right:10px">
+        <div id="container"></div>
+      </span><span class="td" style="vertical-align:top;width:120px;"><div style="text-align:left">
+        <div class="label">Who move first</div>
+        <div><select id="selMoveMode" size="3">
+          <option selected value="0">Me</option>
+          <option value="1">αXq</option>
+          <option value="2">PvP</option>
+        </select></div>
+        <div class="label">Move first with a handicap</div>
+        <div><select id="selHandicap" style="padding:0px">
+          <option selected value="0">No handicap</option>
+          <option value="1">Handicap left horse</option>
+          <option value="2">Handicap both horse</option>
+          <option value="3">Handicap 9 Pieces</option>
+        </select></div>
+        <div style="padding-top:2px"><input type="button" class="button" value="Restart" onclick="restart_click()"></div>
+        <div style="padding-top:2px"><input type="button" class="button" value="Undo move" onclick="retract_click()"></div>
+        <div style="height:12px"></div>
+        <div class="label">AI Skill Level</div>
+        <div><select id="selLevel" size="4" onchange="level_change()">
+          <option selected value="0">Beginner</option>
+          <option value="1">Intermediate</option>
+          <option value="2">Expert</option>
+          <option value="3">Adaptive</option>
+        </select></div>
+        <div style="height:12px"></div>
+        <div><input type="checkbox" class="checkbox" id="chkAnimated" checked onclick="board.animated = checked"><label for="chkAnimated">Animation</label></input></div>
+        <div><input type="checkbox" class="checkbox" checked onclick="board.setSound(checked)"><label for="chkSound">Sound</label></input></div>
+        <div style="height:60px"></div>
+        <div class="label">Scoresheet</div>
+        <div><select id="selMoveList" size="10" style="font-family:宋体" onchange="moveList_change()">
+          <option selected value="0">=== BEGIN ===</option>
+        </select></div>
+      </div></span>
+    </div>
+    <script type="text/javascript"><!--
+"use strict";
+
+var STARTUP_FEN = [
+  "rnbakabnr/9/1c5c1/p1p1p1p1p/9/9/P1P1P1P1P/1C5C1/9/RNBAKABNR w",
+  "rnbakabnr/9/1c5c1/p1p1p1p1p/9/9/P1P1P1P1P/1C5C1/9/RNBAKAB1R w",
+  "rnbakabnr/9/1c5c1/p1p1p1p1p/9/9/P1P1P1P1P/1C5C1/9/R1BAKAB1R w",
+  "rnbakabnr/9/1c5c1/p1p1p1p1p/9/9/9/1C5C1/9/RN2K2NR w",
+];
+
+function createOption(text, value, ie8) {
+  var opt = document.createElement("option");
+  opt.selected = true;
+  opt.value = value;
+  if (ie8) {
+    opt.text = text;
+  } else {
+    opt.innerHTML = text.replace(/ /g, "&nbsp;");
+  }
+  return opt;
+}
+
+var board = new Board(container, "images/", "sounds/");
+board.setSearch(16);
+board.millis = 10;
+board.computer = 1;
+board.onAddMove = function() {
+  var counter = (board.pos.mvList.length >> 1);
+  var space = (counter > 99 ? "    " : "   ");
+  counter = (counter > 9 ? "" : " ") + counter + ".";
+  var text = (board.pos.sdPlayer == 0 ? space : counter) + move2Iccs(board.mvLast);
+  var value = "" + board.mvLast;
+  try {
+    selMoveList.add(createOption(text, value, false));
+  } catch (e) {
+    selMoveList.add(createOption(text, value, true));
+  }
+  selMoveList.scrollTop = selMoveList.scrollHeight;
+};
+
+function level_change() {
+    if (selLevel.selectedIndex!=3) {
+    // Static difficulty levels
+    if (selLevel.selectedIndex==0) {
+      board.millis = 10;
+    } else if (selLevel.selectedIndex==1) {
+      board.millis = 100;
+    } else if (selLevel.selectedIndex==2) {
+      board.millis = 1000;
+    }
+  } else {
+    // Adaptive difficulty based on the number of moves made
+    var playerMoves = board.pos.mvList.length;
+    if (playerMoves < 20) {
+      board.millis = 10; // Beginner level
+    } else if (playerMoves < 50) {
+      board.millis = 100; // Intermediate level
+    } else {
+      board.millis = 1000; // Expert level
+    }
+  }
+}
+  // if(selLevel.selectedIndex==3)
+  //         {
+  //
+  //           }
+  // else{
+  //  board.millis = Math.pow(10, selLevel.selectedIndex + 1);
+  // }
+
+
+
+function restart_click() {
+  selMoveList.options.length = 1;
+  selMoveList.selectedIndex = 0;
+  board.computer = 1 - selMoveMode.selectedIndex;
+  board.restart(STARTUP_FEN[selHandicap.selectedIndex]);
+}
+
+function retract_click() {
+  for (var i = board.pos.mvList.length; i < selMoveList.options.length; i ++) {
+    board.pos.makeMove(parseInt(selMoveList.options[i].value));
+  }
+  board.retract();
+  selMoveList.options.length = board.pos.mvList.length;
+  selMoveList.selectedIndex = selMoveList.options.length - 1;
+}
+
+function moveList_change() {
+  if (board.result == RESULT_UNKNOWN) {
+    selMoveList.selectedIndex = selMoveList.options.length - 1;
+    return;
+  }
+  var from = board.pos.mvList.length;
+  var to = selMoveList.selectedIndex;
+  if (from == to + 1) {
+    return;
+  }
+  if (from > to + 1) {
+    for (var i = to + 1; i < from; i ++) {
+      board.pos.undoMakeMove();
+    }
+  } else {
+    for (var i = from; i <= to; i ++) {
+      board.pos.makeMove(parseInt(selMoveList.options[i].value));
+    }
+  }
+  board.flushBoard();
+}
+    --></script>
+  </body>
+</html>
