@@ -1,9 +1,9 @@
 
-# Chinese Chess (AlphaXq)
+# AlphaXq
 
 ## Project Overview
 
-Chinese Chess (AlphaXq) is a JavaScript-based Chinese chess AI project designed to provide a simple and easy-to-use playing experience. The project is inspired by the open-source codes of [XQlightweight](https://github.com/xqbase/xqwlight) and [eleeye](https://github.com/xqbase/eleeye).
+AlphaXq is a JavaScript-based Chinese chess AI project designed to provide a simple and easy-to-use playing experience. 'Xq' stands for "XiangQi," the Chinese term for Chinese Chess. The project is inspired by the open-source codes of [XQlightweight](https://github.com/xqbase/xqwlight) and [eleeye](https://github.com/xqbase/eleeye).
 
 AlphaXq was developed by Zhenlei Guo, a student at Universite Paris-Saclay. This project introduces an innovative AI engine capable of dynamically adjusting AI thinking time based on the player's moves, thereby adjusting the search depth and difficulty level—a feature not available in other systems. Through this dynamic adjustment, the AI can provide a more challenging and personalized gaming experience for players.
 
